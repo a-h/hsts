@@ -92,6 +92,31 @@ func TestThatHTTPRequestsAreRedirectToHTTPS(t *testing.T) {
 	}
 }
 
+func TestThatTheHostCanBeOverridden(t *testing.T) {
+	// Create the handler to wrap.
+	wrappedHandler := &TestHandler{
+		body: []byte("Shouldn't see this content over HTTP, only over HTTPS."),
+	}
+
+	// Create the middleware and pass it the wrapped handler.
+	hstsHandler := NewHandler(wrappedHandler)
+	hstsHandler.hostOverride = "subdomain.example.com"
+
+	// Create a mock request to capture the result.
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "http://example.com/test", nil)
+
+	// Act.
+	hstsHandler.ServeHTTP(w, req)
+
+	// Assert.
+	expectedRedirect := "https://subdomain.example.com/test"
+	actualRedirect := w.Header().Get("Location")
+	if actualRedirect != expectedRedirect {
+		t.Errorf("Expected a redirect to %s, but got a redirect to %s", expectedRedirect, actualRedirect)
+	}
+}
+
 func TestThatHTTPSRequestsAreNotAffected(t *testing.T) {
 	// Create the handler to wrap.
 	wrappedHandler := &TestHandler{

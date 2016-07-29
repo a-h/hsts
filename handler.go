@@ -11,6 +11,9 @@ import (
 type Handler struct {
 	next   http.Handler
 	maxAge time.Duration
+	// hostOverride provides a host to the redirection URL in the case that the system is behind a load balancer
+	// which doesn't support the X-Forwarded-Host HTTP header (e.g. an Amazon ELB).
+	hostOverride string
 }
 
 // NewHandler creates a new HSTS redirector, which will redirect any request served over HTTP over to HTTPS.
@@ -26,7 +29,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		timeInSeconds := int(h.maxAge.Seconds())
 		w.Header().Add("Strict-Transport-Security", "max-age="+strconv.Itoa(timeInSeconds)+"; includeSubDomains")
 
-		if !r.URL.IsAbs() {
+		if h.hostOverride != "" {
+			r.URL.Host = h.hostOverride
+		} else if !r.URL.IsAbs() {
 			r.URL.Host = r.Host
 		}
 
