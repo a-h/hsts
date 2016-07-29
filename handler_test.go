@@ -100,7 +100,7 @@ func TestThatTheHostCanBeOverridden(t *testing.T) {
 
 	// Create the middleware and pass it the wrapped handler.
 	hstsHandler := NewHandler(wrappedHandler)
-	hstsHandler.hostOverride = "subdomain.example.com"
+	hstsHandler.HostOverride = "subdomain.example.com"
 
 	// Create a mock request to capture the result.
 	w := httptest.NewRecorder()
