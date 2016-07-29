@@ -4,7 +4,7 @@ the HSTS header.
 
 # Usage
 
-```
+```go
 package main
 
 import (
@@ -47,11 +47,11 @@ func serveFunction(w http.ResponseWriter, r *http.Request) {
 # Example
 The example application demonstrates how the application redirects the user and adds the HSTS header if HTTP is used.
 
-```
+```bash
 curl -v localhost:8080/hellohandler
 ```
 
-```
+```bash
 *   Trying ::1...
 * Connected to localhost (::1) port 8080 (#0)
 > GET /hellohandler HTTP/1.1
