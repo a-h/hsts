@@ -22,13 +22,28 @@ func TestThatHTTPRequestsAreRedirectToHTTPS(t *testing.T) {
 		method           string
 	}{
 		{
-			inputURL:         "http://www.google.com",
-			expectedRedirect: "https://www.google.com",
+			inputURL:         "http://www.example.com",
+			expectedRedirect: "https://www.example.com",
 			method:           http.MethodGet,
 		},
 		{
-			inputURL:         "http://www.google.com",
-			expectedRedirect: "https://www.google.com",
+			inputURL:         "http://example.com",
+			expectedRedirect: "https://example.com",
+			method:           http.MethodPost,
+		},
+		{
+			inputURL:         "http://example.com:80",
+			expectedRedirect: "https://example.com:80",
+			method:           http.MethodPost,
+		},
+		{
+			inputURL:         "http://example.com/test/",
+			expectedRedirect: "https://example.com/test/",
+			method:           http.MethodPost,
+		},
+		{
+			inputURL:         "/test",
+			expectedRedirect: "https://example.com/test",
 			method:           http.MethodPost,
 		},
 	}
@@ -37,6 +52,7 @@ func TestThatHTTPRequestsAreRedirectToHTTPS(t *testing.T) {
 		// Create a mock request to capture the result.
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest(test.method, test.inputURL, nil)
+		req.Host = "example.com"
 
 		// Act.
 		hstsHandler.ServeHTTP(w, req)
@@ -46,10 +62,12 @@ func TestThatHTTPRequestsAreRedirectToHTTPS(t *testing.T) {
 			body         string
 			redirectedTo string
 			statusCode   int
+			stsHeader    string
 		}{
 			body:         strings.TrimSpace(string(w.Body.Bytes())),
 			redirectedTo: w.Header().Get("Location"),
 			statusCode:   w.Code,
+			stsHeader:    w.Header().Get("Strict-Transport-Security"),
 		}
 
 		if test.expectedRedirect != actual.redirectedTo {
@@ -66,6 +84,10 @@ func TestThatHTTPRequestsAreRedirectToHTTPS(t *testing.T) {
 			if actual.body != expectedBody {
 				t.Errorf("For a HTTP %s to %s, expected a redirect link in the body \"%s\" but the body contained \"%s\"", test.method, test.inputURL, expectedBody, actual.body)
 			}
+		}
+
+		if !strings.Contains(actual.stsHeader, "max-age=7776000;") {
+			t.Errorf("Expected the STS header to contain a max-age of 7776000 (90 days in seconds), but the header was \"%s\"", actual.stsHeader)
 		}
 	}
 }

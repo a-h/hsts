@@ -1,10 +1,3 @@
-# hsts
-Go (Golang) middleware which redirects users from HTTP to HTTPS and adds 
-the HSTS header.
-
-# Usage
-
-```
 package main
 
 import (
@@ -42,31 +35,3 @@ func (h *structHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func serveFunction(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello from a function."))
 }
-```
-
-# Example
-The example application demonstrates how the application redirects the user and adds the HSTS header if HTTP is used.
-
-```
-curl -v localhost:8080/hellohandler
-```
-
-```
-*   Trying ::1...
-* Connected to localhost (::1) port 8080 (#0)
-> GET /hellohandler HTTP/1.1
-> Host: localhost:8080
-> User-Agent: curl/7.43.0
-> Accept: */*
->
-< HTTP/1.1 301 Moved Permanently
-< Location: https://localhost:8080/hellohandler
-< Strict-Transport-Security: max-age=15768000; includeSubDomains
-< Date: Fri, 29 Jul 2016 12:18:37 GMT
-< Content-Length: 70
-< Content-Type: text/html; charset=utf-8
-<
-<a href="https://localhost:8080/hellohandler">Moved Permanently</a>.
-
-* Connection #0 to host localhost left intact
-```
