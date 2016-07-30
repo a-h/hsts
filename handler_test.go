@@ -197,8 +197,8 @@ func TestThatHTTPSRequestsHaveTheHeaderApplied(t *testing.T) {
 			t.Errorf("For a HTTPS GET to %s, expected a body of %s but the body was actually %s", url, "Secure content!", actual.body)
 		}
 
-		if !strings.Contains(actual.stsHeader, "max-age=7776000;") {
-			t.Errorf("Expected the STS header to contain a max-age of 7776000 (90 days in seconds), but the header was \"%s\"", actual.stsHeader)
+		if !strings.Contains(actual.stsHeader, "max-age=10886400;") {
+			t.Errorf("Expected the STS header to contain a max-age of 10886400 (18 weeks in seconds), but the header was \"%s\"", actual.stsHeader)
 		}
 	}
 }
