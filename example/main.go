@@ -1,13 +1,32 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 
 	"github.com/a-h/hsts"
 )
 
+var serveHTTPSFlag = flag.Bool("serveHTTPS", false, "Whether the system should serve SSL using the example certificate.")
+
 func main() {
+	if *serveHTTPSFlag {
+		serveHTTPS()
+	} else {
+		serveHTTP()
+	}
+}
+
+func serveHTTPS() {
+	log.Print("Serving HTTPS to demonstrate header.")
+
+	http.Handle("/hellohandler", hsts.NewHandler(&structHandler{}))
+	http.Handle("/hellofunction", hsts.NewHandler(http.HandlerFunc(serveFunction)))
+	log.Fatal(http.ListenAndServeTLS(":443", "server.pem", "server.key", nil))
+}
+
+func serveHTTP() {
 	redirectToSSL := true
 
 	if redirectToSSL {

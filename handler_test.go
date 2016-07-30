@@ -1,13 +1,14 @@
 package hsts
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
-func TestThatHTTPRequestsAreRedirectToHTTPS(t *testing.T) {
+func TestThatHTTPRequestsAreRedirectedToHTTPS(t *testing.T) {
 	// Create the handler to wrap.
 	wrappedHandler := &TestHandler{
 		body: []byte("Shouldn't see this content over HTTP, only over HTTPS."),
@@ -86,9 +87,38 @@ func TestThatHTTPRequestsAreRedirectToHTTPS(t *testing.T) {
 			}
 		}
 
-		if !strings.Contains(actual.stsHeader, "max-age=7776000;") {
-			t.Errorf("Expected the STS header to contain a max-age of 7776000 (90 days in seconds), but the header was \"%s\"", actual.stsHeader)
+		if actual.stsHeader != "" {
+			t.Errorf("The STS header should only be set on HTTPS requests. But over HTTP it was %s", actual.stsHeader)
 		}
+	}
+}
+
+func TestThatCommonHTTPHeadersAreUsedToDetermineSSLStatus(t *testing.T) {
+	r, _ := http.NewRequest("GET", "/", nil)
+
+	if isHTTPS(r, true) {
+		t.Error("The request was HTTP, but this was not detected")
+	}
+
+	r.Header.Add("X-Forwarded-Proto", "https")
+
+	if !isHTTPS(r, true) {
+		t.Error("The request was HTTPS, but this was not detected")
+	}
+
+	if isHTTPS(r, false) {
+		t.Error("The request was declared HTTPS by the header, but this was not enabled.")
+	}
+}
+
+func TestThatTLSIsUsedToDetermineSSLStatus(t *testing.T) {
+	r, _ := http.NewRequest("GET", "/", nil)
+	r.TLS = &tls.ConnectionState{
+		HandshakeComplete: true,
+	}
+
+	if !isHTTPS(r, false) {
+		t.Error("The request was HTTPS, but this was not detected")
 	}
 }
 
@@ -117,7 +147,7 @@ func TestThatTheHostCanBeOverridden(t *testing.T) {
 	}
 }
 
-func TestThatHTTPSRequestsAreNotAffected(t *testing.T) {
+func TestThatHTTPSRequestsHaveTheHeaderApplied(t *testing.T) {
 	// Create the handler to wrap.
 	wrappedHandler := &TestHandler{
 		body: []byte("Secure content!"),
@@ -147,10 +177,12 @@ func TestThatHTTPSRequestsAreNotAffected(t *testing.T) {
 			body         string
 			redirectedTo string
 			statusCode   int
+			stsHeader    string
 		}{
 			body:         string(w.Body.Bytes()),
 			redirectedTo: w.Header().Get("Location"),
 			statusCode:   w.Code,
+			stsHeader:    w.Header().Get("Strict-Transport-Security"),
 		}
 
 		if actual.redirectedTo != "" {
@@ -163,6 +195,10 @@ func TestThatHTTPSRequestsAreNotAffected(t *testing.T) {
 
 		if actual.body != "Secure content!" {
 			t.Errorf("For a HTTPS GET to %s, expected a body of %s but the body was actually %s", url, "Secure content!", actual.body)
+		}
+
+		if !strings.Contains(actual.stsHeader, "max-age=7776000;") {
+			t.Errorf("Expected the STS header to contain a max-age of 7776000 (90 days in seconds), but the header was \"%s\"", actual.stsHeader)
 		}
 	}
 }
