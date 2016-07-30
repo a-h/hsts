@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestThatHTTPRequestsAreRedirectedToHTTPS(t *testing.T) {
@@ -200,6 +201,22 @@ func TestThatHTTPSRequestsHaveTheHeaderApplied(t *testing.T) {
 		if !strings.Contains(actual.stsHeader, "max-age=10886400;") {
 			t.Errorf("Expected the STS header to contain a max-age of 10886400 (18 weeks in seconds), but the header was \"%s\"", actual.stsHeader)
 		}
+	}
+}
+
+func TestHeaderValueIncludesPreloadDirective(t *testing.T) {
+	expected := "max-age=3600; includeSubDomains"
+	actual := createHeaderValue(time.Hour, false)
+
+	if expected != actual {
+		t.Errorf("Expected header without preload of \"%s\", but got \"%s\"", expected, actual)
+	}
+
+	expected = "max-age=3600; includeSubDomains; preload"
+	actual = createHeaderValue(time.Hour, true)
+
+	if expected != actual {
+		t.Errorf("Expected header with a preload of \"%s\", but got \"%s\"", expected, actual)
 	}
 }
 

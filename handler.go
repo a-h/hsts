@@ -17,6 +17,9 @@ type Handler struct {
 	HostOverride string
 	// Decides whether to accept the X-Forwarded-Proto header as proof of SSL.
 	AcceptXForwardedProtoHeader bool
+	// SendPreloadDirective sets whether the preload directive should be set. The directive allows browsers to
+	// confirm that the site should be added to a preload list. (see https://hstspreload.appspot.com/)
+	SendPreloadDirective bool
 }
 
 // NewHandler creates a new HSTS redirector, which will redirect any request served over HTTP over to HTTPS.
@@ -25,6 +28,7 @@ func NewHandler(next http.Handler) *Handler {
 		next:   next,
 		MaxAge: time.Hour * 24 * 126, // 126 days (minimum for inclusion in the Chrome HSTS list)
 		AcceptXForwardedProtoHeader: true,
+		SendPreloadDirective:        false,
 	}
 }
 
@@ -45,10 +49,19 @@ func isHTTPS(r *http.Request, acceptXForwardedProtoHeader bool) bool {
 	return false
 }
 
+func createHeaderValue(maxAge time.Duration, sendPreloadDirective bool) string {
+	timeInSeconds := int(maxAge.Seconds())
+
+	if sendPreloadDirective {
+		return "max-age=" + strconv.Itoa(timeInSeconds) + "; includeSubDomains; preload"
+	}
+
+	return "max-age=" + strconv.Itoa(timeInSeconds) + "; includeSubDomains"
+}
+
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if isHTTPS(r, h.AcceptXForwardedProtoHeader) {
-		timeInSeconds := int(h.MaxAge.Seconds())
-		w.Header().Add("Strict-Transport-Security", "max-age="+strconv.Itoa(timeInSeconds)+"; includeSubDomains")
+		w.Header().Add("Strict-Transport-Security", createHeaderValue(h.MaxAge, h.SendPreloadDirective))
 
 		h.next.ServeHTTP(w, r)
 	} else {
