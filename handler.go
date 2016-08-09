@@ -1,6 +1,7 @@
 package hsts
 
 import (
+	"bytes"
 	"net/http"
 	"strconv"
 	"time"
@@ -50,13 +51,13 @@ func isHTTPS(r *http.Request, acceptXForwardedProtoHeader bool) bool {
 }
 
 func createHeaderValue(maxAge time.Duration, sendPreloadDirective bool) string {
-	timeInSeconds := int(maxAge.Seconds())
-
+	buf := bytes.NewBufferString("max-age=")
+	buf.WriteString(strconv.Itoa(int(maxAge.Seconds())))
+	buf.WriteString("; includeSubDomains")
 	if sendPreloadDirective {
-		return "max-age=" + strconv.Itoa(timeInSeconds) + "; includeSubDomains; preload"
+		buf.WriteString("; preload")
 	}
-
-	return "max-age=" + strconv.Itoa(timeInSeconds) + "; includeSubDomains"
+	return buf.String()
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
