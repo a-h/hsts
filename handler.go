@@ -51,6 +51,16 @@ func isHTTPS(r *http.Request, acceptXForwardedProtoHeader bool) bool {
 }
 
 func createHeaderValue(maxAge time.Duration, sendPreloadDirective bool) string {
+	timeInSeconds := int(maxAge.Seconds())
+
+	if sendPreloadDirective {
+		return "max-age=" + strconv.Itoa(timeInSeconds) + "; includeSubDomains; preload"
+	}
+
+	return "max-age=" + strconv.Itoa(timeInSeconds) + "; includeSubDomains"
+}
+
+func createHeaderValueNew(maxAge time.Duration, sendPreloadDirective bool) string {
 	buf := bytes.NewBufferString("max-age=")
 	buf.WriteString(strconv.Itoa(int(maxAge.Seconds())))
 	buf.WriteString("; includeSubDomains")

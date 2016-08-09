@@ -230,3 +230,17 @@ func (th *TestHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	th.wasExecuted = true
 	w.Header().Add("x-test", "x-test-value")
 }
+
+func BenchmarkCreateheaderValueOld(b *testing.B) {
+	b.ReportAllocs()
+	for n := 0; n < b.N; n++ {
+		createHeaderValue(time.Hour, true)
+	}
+}
+
+func BenchmarkCreateheaderValueNew(b *testing.B) {
+	b.ReportAllocs()
+	for n := 0; n < b.N; n++ {
+		createHeaderValueNew(time.Hour, true)
+	}
+}
