@@ -1,4 +1,7 @@
 # hsts
+
+[![Build Status](https://travis-ci.org/travis-ci/travis-web.svg?branch=master)](https://travis-ci.org/travis-ci/travis-web)
+
 Go (Golang) middleware which redirects users from HTTP to HTTPS and adds 
 the HSTS header.
 
