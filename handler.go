@@ -38,6 +38,13 @@ func isHTTPS(r *http.Request, acceptXForwardedProtoHeader bool) bool {
 	if acceptXForwardedProtoHeader && r.Header.Get("X-Forwarded-Proto") == "https" {
 		return true
 	}
+
+	// Give preference to the X-Forwarded-Proto from upstream if its
+	// handling a cleartext request
+	if acceptXForwardedProtoHeader && r.Header.Get("X-Forwarded-Proto") == "http" {
+		return false
+	}
+
 	// Set by some middleware.
 	if r.URL.Scheme == "https" {
 		return true
