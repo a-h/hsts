@@ -123,6 +123,18 @@ func TestThatTLSIsUsedToDetermineSSLStatus(t *testing.T) {
 	}
 }
 
+func TestThatTLSDoesNotOverrideHTTPHeadersToDetermineSSLStatus(t *testing.T) {
+	r, _ := http.NewRequest("GET", "/", nil)
+	r.TLS = &tls.ConnectionState{
+		HandshakeComplete: true,
+	}
+	r.Header.Add("X-Forwarded-Proto", "http")
+
+	if isHTTPS(r, true) {
+		t.Error("The request from the load balancer to the service was HTTPS, but the request from the user to the load balancer was HTTP.")
+	}
+}
+
 func TestThatTheHostCanBeOverridden(t *testing.T) {
 	// Create the handler to wrap.
 	wrappedHandler := &TestHandler{
