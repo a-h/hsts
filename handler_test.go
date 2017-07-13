@@ -131,7 +131,7 @@ func TestThatTLSDoesNotOverrideHTTPHeadersToDetermineSSLStatus(t *testing.T) {
 	r.Header.Add("X-Forwarded-Proto", "http")
 
 	if isHTTPS(r, true) {
-		t.Error("The request was HTTPS but was declared HTTP by the header, but this was overruled")
+		t.Error("The request from the load balancer to the service was HTTPS, but the request from the user to the load balancer was HTTP.")
 	}
 }
 
